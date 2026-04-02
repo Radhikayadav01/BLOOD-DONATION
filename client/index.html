@@ -1,21 +1,20 @@
 <!DOCTYPE html><html>
 <head>
-  <title>Blood Donation System</title>  <!-- Chart.js -->  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <style>
+  <title>Blood Donation System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <style>
     body {
       font-family: Arial;
       background: #f0f2f5;
       text-align: center;
     }
 
-    h1 {
-      color: red;
-    }
+    h1 { color: red; }
 
     .box {
       background: white;
       padding: 20px;
       margin: 20px auto;
-      width: 70%;
+      width: 80%;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
@@ -24,8 +23,6 @@
       padding: 10px;
       margin: 5px;
       width: 18%;
-      border-radius: 5px;
-      border: 1px solid #ccc;
     }
 
     button {
@@ -37,92 +34,124 @@
       cursor: pointer;
     }
 
-    button:hover {
-      background: darkred;
+    button:hover { background: darkred; }
+
+    .lists {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
     }
 
-    canvas {
-      max-width: 300px;
-      margin: 20px auto;
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #eee;
+      margin: 5px;
+      padding: 8px;
+      border-radius: 5px;
     }
   </style></head><body><h1>❤️ Blood Donation System</h1><div class="box">
   <h2>Add Donor</h2>
-  <input id="name" placeholder="Name">
-  <input id="blood" placeholder="Blood Group">
-  <input id="city" placeholder="City">
-  <input id="phone" placeholder="Phone">
-  <br>
+  <input id="d_name" placeholder="Name">
+  <input id="d_blood" placeholder="Blood Group">
+  <input id="d_city" placeholder="City">
+  <input id="d_phone" placeholder="Phone">
+  <br><br>
   <button onclick="addDonor()">Add Donor</button>
 </div><div class="box">
   <h2>Add Request</h2>
-  <input id="rblood" placeholder="Blood Group">
-  <input id="hospital" placeholder="Hospital">
-  <input id="contact" placeholder="Contact">
-  <br>
+  <input id="r_blood" placeholder="Blood Group">
+  <input id="r_hospital" placeholder="Hospital">
+  <input id="r_contact" placeholder="Contact">
+  <br><br>
   <button onclick="addRequest()">Add Request</button>
 </div><div class="box">
   <h2>Dashboard</h2>
   <button onclick="loadStats()">Load Stats</button>
-  <p id="stats"></p>  <!-- Chart --><canvas id="myChart"></canvas>
+  <p id="stats"></p>  <div style="width:300px; margin:auto;">
+    <canvas id="chart"></canvas>
+  </div>
+</div><div class="box">
+  <h2>Data Lists</h2>  <div class="lists">
+    <div>
+      <h3>Donors</h3>
+      <ul id="donorList"></ul>
+    </div><div>
+  <h3>Requests</h3>
+  <ul id="requestList"></ul>
+</div>
 
+  </div>
 </div><script>
-const API = "http://localhost:5000";
+let donors = JSON.parse(localStorage.getItem("donors")) || [];
+let requests = JSON.parse(localStorage.getItem("requests")) || [];
 let chart;
 
 // Add Donor
-async function addDonor() {
-  await fetch(API + "/donor", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: name.value,
-      blood_group: blood.value,
-      city: city.value,
-      phone: phone.value
-    })
+function addDonor() {
+  donors.push({
+    name: d_name.value,
+    blood: d_blood.value,
+    city: d_city.value,
+    phone: d_phone.value
   });
 
+  localStorage.setItem("donors", JSON.stringify(donors));
   alert("Donor Added ✅");
 }
 
 // Add Request
-async function addRequest() {
-  const res = await fetch(API + "/request", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      blood_group: rblood.value,
-      hospital: hospital.value,
-      contact: contact.value
-    })
+function addRequest() {
+  requests.push({
+    blood: r_blood.value,
+    hospital: r_hospital.value,
+    contact: r_contact.value
   });
 
-  const data = await res.json();
-  alert("Matched Donors: " + (data.matchedDonors?.length || 0));
+  localStorage.setItem("requests", JSON.stringify(requests));
+  alert("Request Added ✅");
 }
 
-// Load Stats + Chart
-async function loadStats() {
-  const res = await fetch(API + "/stats");
-  const data = await res.json();
+// Load Stats + Chart + Lists
+function loadStats() {
 
   document.getElementById("stats").innerText =
-    `Donors: ${data.donors}, Requests: ${data.requests}`;
+    "Donors: " + donors.length + " | Requests: " + requests.length;
 
-  // Chart create/update
+  // Chart
   if (chart) chart.destroy();
 
-  const ctx = document.getElementById("myChart");
-
-  chart = new Chart(ctx, {
+  chart = new Chart(document.getElementById("chart"), {
     type: "pie",
     data: {
       labels: ["Donors", "Requests"],
       datasets: [{
-        data: [data.donors, data.requests],
+        data: [donors.length, requests.length],
         backgroundColor: ["red", "blue"]
       }]
     }
+  });
+
+  // Lists
+  let donorList = document.getElementById("donorList");
+  let requestList = document.getElementById("requestList");
+
+  donorList.innerHTML = "";
+  requestList.innerHTML = "";
+
+  donors.forEach(d => {
+    let li = document.createElement("li");
+    li.innerText = `${d.name} (${d.blood}) - ${d.city} 📞 ${d.phone}`;
+    donorList.appendChild(li);
+  });
+
+  requests.forEach(r => {
+    let li = document.createElement("li");
+    li.innerText = `${r.blood} - ${r.hospital} 📞 ${r.contact}`;
+    requestList.appendChild(li);
   });
 }
 </script></body>
