@@ -1,0 +1,129 @@
+<!DOCTYPE html><html>
+<head>
+  <title>Blood Donation System</title>  <!-- Chart.js -->  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <style>
+    body {
+      font-family: Arial;
+      background: #f0f2f5;
+      text-align: center;
+    }
+
+    h1 {
+      color: red;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      margin: 20px auto;
+      width: 70%;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 18%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: darkred;
+    }
+
+    canvas {
+      max-width: 300px;
+      margin: 20px auto;
+    }
+  </style></head><body><h1>❤️ Blood Donation System</h1><div class="box">
+  <h2>Add Donor</h2>
+  <input id="name" placeholder="Name">
+  <input id="blood" placeholder="Blood Group">
+  <input id="city" placeholder="City">
+  <input id="phone" placeholder="Phone">
+  <br>
+  <button onclick="addDonor()">Add Donor</button>
+</div><div class="box">
+  <h2>Add Request</h2>
+  <input id="rblood" placeholder="Blood Group">
+  <input id="hospital" placeholder="Hospital">
+  <input id="contact" placeholder="Contact">
+  <br>
+  <button onclick="addRequest()">Add Request</button>
+</div><div class="box">
+  <h2>Dashboard</h2>
+  <button onclick="loadStats()">Load Stats</button>
+  <p id="stats"></p>  <!-- Chart --><canvas id="myChart"></canvas>
+
+</div><script>
+const API = "http://localhost:5000";
+let chart;
+
+// Add Donor
+async function addDonor() {
+  await fetch(API + "/donor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: name.value,
+      blood_group: blood.value,
+      city: city.value,
+      phone: phone.value
+    })
+  });
+
+  alert("Donor Added ✅");
+}
+
+// Add Request
+async function addRequest() {
+  const res = await fetch(API + "/request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      blood_group: rblood.value,
+      hospital: hospital.value,
+      contact: contact.value
+    })
+  });
+
+  const data = await res.json();
+  alert("Matched Donors: " + (data.matchedDonors?.length || 0));
+}
+
+// Load Stats + Chart
+async function loadStats() {
+  const res = await fetch(API + "/stats");
+  const data = await res.json();
+
+  document.getElementById("stats").innerText =
+    `Donors: ${data.donors}, Requests: ${data.requests}`;
+
+  // Chart create/update
+  if (chart) chart.destroy();
+
+  const ctx = document.getElementById("myChart");
+
+  chart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["Donors", "Requests"],
+      datasets: [{
+        data: [data.donors, data.requests],
+        backgroundColor: ["red", "blue"]
+      }]
+    }
+  });
+}
+</script></body>
+</html>
